@@ -1,10 +1,11 @@
 import * as path from "node:path";
 import * as cdk from "aws-cdk-lib";
-import { aws_cloudfront, aws_cloudfront_origins, aws_ssm } from "aws-cdk-lib";
+import { aws_cloudfront, aws_cloudfront_origins } from "aws-cdk-lib";
 import { Distribution } from "aws-cdk-lib/aws-cloudfront";
 import { Construct } from "constructs";
 import { EDGE_REGION, PARAMETER_PREFIX } from "../bin/infra";
 import { CrossRegionParameter } from "./constructs/crossOriginParameter";
+import { ObjectsUploadUser } from "./constructs/objectsUploadUser";
 
 export class InfraStack extends cdk.Stack {
 	constructor(scope: Construct, id: string, props: cdk.StackProps) {
@@ -47,6 +48,12 @@ export class InfraStack extends cdk.Stack {
 			cognitoUserPoolClientId: userPool.client.userPoolClientId,
 			cognitoUserPoolDomain: userPool.cognitoDomain,
 		});
+
+		new ObjectsUploadUser(this, "ObjectsUploadUser", {
+			pathName: "private",
+			bucket: privateDistribution.bucket,
+			distribution: privateDistribution.distribution,
+		});
 	}
 
 	/**
@@ -63,7 +70,7 @@ export class InfraStack extends cdk.Stack {
 		new CrossRegionParameter(this, "ParameterCognitoUserPool", {
 			region: EDGE_REGION,
 			name: `${PARAMETER_PREFIX}/user-pool-id`,
-			value: parameters.cognitoUserPoolClientId,
+			value: parameters.cognitoUserPoolId,
 		});
 		new CrossRegionParameter(this, "ParameterCognitoClientId", {
 			region: EDGE_REGION,
@@ -193,6 +200,9 @@ class PrivateUserPool extends Construct {
 			userPoolClientName: "WebClient",
 			authFlows: {
 				userPassword: true,
+			},
+			oAuth: {
+				callbackUrls: [callbackUrl],
 			},
 		});
 
