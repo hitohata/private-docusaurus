@@ -27,7 +27,7 @@ jobs:
       - name: Get and Set bucket name
         run: |
           cmd="$(aws ssm get-parameter --name "/deploy/distribution/id" --output json $AWS_DEFAULT_REGION | jq '.Parameter.Value')"
-          echo $emd
+          echo $cmd
           echo "DISTRIBUTION=$cmd" >> "$GITHUB_ENV"
       - name: Update to s3
         run: aws s3 cp ./build/ s3://${{ env.BUCKET_NAME }}/private --recursive
