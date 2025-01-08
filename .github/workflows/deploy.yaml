@@ -29,6 +29,6 @@ jobs:
           cmd="$(aws ssm get-parameter --name "/deploy/distribution/id" --output json $AWS_DEFAULT_REGION | jq '.Parameter.Value')"
           echo "DISTRIBUTION=$cmd" >> "$GITHUB_ENV"
       - name: Update to s3
-        run: aws s3 cp ./dist/ s3://${{ env.BUCKET_NAME }}/private --recursive
+        run: aws s3 cp ./build/ s3://${{ env.BUCKET_NAME }}/private --recursive
       - name: remove cache of cloudfront
         run: aws cloudfront create-invalidation --distribution-id ${{ env.DISTRIBUTION }} --paths "/private"
