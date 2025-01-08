@@ -42,7 +42,7 @@ export class ObjectsUploadUser extends Construct {
 							new aws_iam.PolicyStatement({
 								effect: aws_iam.Effect.ALLOW,
 								actions: ["cloudfront:CreateInvalidation"],
-								resources: [`${distribution.distributionArn}/${pathName}/*`],
+								resources: [distribution.distributionArn],
 							}),
 							new aws_iam.PolicyStatement({
 								effect: aws_iam.Effect.ALLOW,
