@@ -1,12 +1,16 @@
 import { aws_iam } from "aws-cdk-lib";
 import type { Distribution } from "aws-cdk-lib/aws-cloudfront";
 import type { Bucket } from "aws-cdk-lib/aws-s3";
+import type { StringParameter } from "aws-cdk-lib/aws-ssm";
 import { Construct } from "constructs";
+import { BUCKET_NAME_PARAMETER } from "../../bin/infra";
 
 interface IProps {
 	pathName: string; // the bucket prefix
 	bucket: Bucket;
 	distribution: Distribution;
+	bucketParameter: StringParameter;
+	distributionParameter: StringParameter;
 }
 
 /**
@@ -16,7 +20,13 @@ export class ObjectsUploadUser extends Construct {
 	constructor(scope: Construct, id: string, props: IProps) {
 		super(scope, id);
 
-		const { pathName, bucket, distribution } = props;
+		const {
+			pathName,
+			bucket,
+			distribution,
+			bucketParameter,
+			distributionParameter,
+		} = props;
 
 		new aws_iam.User(this, "ObjectUploadUser", {
 			userName: `${pathName}-upload-user`,
@@ -33,6 +43,14 @@ export class ObjectsUploadUser extends Construct {
 								effect: aws_iam.Effect.ALLOW,
 								actions: ["cloudfront:CreateInvalidation"],
 								resources: [`${distribution.distributionArn}/${pathName}/*`],
+							}),
+							new aws_iam.PolicyStatement({
+								effect: aws_iam.Effect.ALLOW,
+								actions: ["ssm:GetParameter"],
+								resources: [
+									bucketParameter.parameterArn,
+									distributionParameter.parameterArn,
+								],
 							}),
 						],
 					}),

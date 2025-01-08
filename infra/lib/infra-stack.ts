@@ -1,9 +1,14 @@
 import * as path from "node:path";
 import * as cdk from "aws-cdk-lib";
-import { aws_cloudfront, aws_cloudfront_origins } from "aws-cdk-lib";
+import { aws_cloudfront, aws_cloudfront_origins, aws_ssm } from "aws-cdk-lib";
 import { Distribution } from "aws-cdk-lib/aws-cloudfront";
 import { Construct } from "constructs";
-import { EDGE_REGION, PARAMETER_PREFIX } from "../bin/infra";
+import {
+	BUCKET_NAME_PARAMETER,
+	DISTRIBUTION_PARAMETER,
+	EDGE_REGION,
+	PARAMETER_PREFIX,
+} from "../bin/infra";
 import { CrossRegionParameter } from "./constructs/crossOriginParameter";
 import { ObjectsUploadUser } from "./constructs/objectsUploadUser";
 
@@ -49,10 +54,29 @@ export class InfraStack extends cdk.Stack {
 			cognitoUserPoolDomain: userPool.cognitoDomain,
 		});
 
+		const bucketParameter = new aws_ssm.StringParameter(
+			this,
+			"BucketNameParameter",
+			{
+				parameterName: BUCKET_NAME_PARAMETER,
+				stringValue: privateDistribution.bucket.bucketName,
+			},
+		);
+		const distributionParameter = new aws_ssm.StringParameter(
+			this,
+			"DistributionIdParameter",
+			{
+				parameterName: DISTRIBUTION_PARAMETER,
+				stringValue: privateDistribution.distribution.distributionId,
+			},
+		);
+
 		new ObjectsUploadUser(this, "ObjectsUploadUser", {
 			pathName: "private",
 			bucket: privateDistribution.bucket,
 			distribution: privateDistribution.distribution,
+			bucketParameter,
+			distributionParameter,
 		});
 	}
 

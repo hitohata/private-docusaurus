@@ -4,6 +4,8 @@ import { InfraStack } from "../lib/infra-stack";
 
 export const EDGE_REGION = "us-east-1";
 export const PARAMETER_PREFIX = "/private-document/auth";
+export const BUCKET_NAME_PARAMETER = "/deploy/bucket/name";
+export const DISTRIBUTION_PARAMETER = "/deploy/distribution/id";
 
 const app = new cdk.App();
 
