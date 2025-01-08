@@ -1,0 +1,34 @@
+name: deploy
+
+on:
+  push:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docusaurus
+    env:
+      AWS_ACCESS_KEY_ID: ${{  secrets.AWS_ACCESS_KEY  }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ env.REGION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Get and Set bucket name
+        run: |
+          cmd="$(aws ssm get-parameter --name "/deploy/bucket/name" --output json --region $AWS_DEFAULT_REGION | jq '.Parameter.Value')"
+          echo "BUCKET_NAME=$cmd" >> "$GITHUB_ENV"
+      - name: Get and Set bucket name
+        run: |
+          cmd="$(aws ssm get-parameter --name "/deploy/distribution/id" --output json $AWS_DEFAULT_REGION | jq '.Parameter.Value')"
+          echo "DISTRIBUTION=$cmd" >> "$GITHUB_ENV"
+      - name: Update to s3
+        run: aws s3 cp ./dist/ s3://${{ env.BUCKET_NAME }}/private --recursive
+      - name: remove cache of cloudfront
+        run: aws cloudfront create-invalidation --distribution-id ${{ env.DISTRIBUTION }} --paths "/private"
